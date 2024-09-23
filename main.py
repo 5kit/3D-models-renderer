@@ -11,13 +11,13 @@ class Vertex():
         self.z = posZ
 
 class Object():
-    # 3D Object with a pivot, verticies and edges
+    # 3D Object with a pivot, vertices and edges
     def __init__(self, cntre, verts, edgs, col=(255,255,255)):
         self.x = cntre[0]
         self.y = cntre[1]
         self.z = cntre[2]
 
-        self.verticies = verts  # Store positions of vertexes in a list
+        self.vertices = verts  # Store positions of vertexes in a list
         self.edges = edgs       # Uses index to represent edges
 
         # rotation of object by all 3 axis
@@ -31,7 +31,7 @@ class Object():
     # draw a the object using 
     def draw3D(self, screen):
         points = []
-        for vert in self.verticies:
+        for vert in self.vertices:
             # Matrix approach
             # Calculation of rotation about x
             Rx = ( vert.x+self.x, 
@@ -48,7 +48,7 @@ class Object():
                   (Ry[0])*-math.sin(self.rz*math.pi/180) + (Ry[1])*math.cos(self.rz*math.pi/180), 
                    Ry[2])
 
-            dispX = 400+ Rz[0]
+            dispX = 300+ Rz[0]
             dispY = 300+ Rz[1]
             
             pygame.draw.circle(screen, self.colour, (dispX, dispY), 2)
@@ -65,9 +65,9 @@ class Object():
             # draw lines
             pygame.draw.line(screen, self.colour, startP, endP, 2)
 
-# Initialisations
+# Initialise pygame
 pygame.init()
-screen = pygame.display.set_mode((800, 600), 0, 32)
+screen = pygame.display.set_mode((600, 600), 0, 32)
 
 st, et = 0, 0
 
@@ -120,21 +120,23 @@ while True:
             pygame.quit()
             sys.exit()
     
+    # Rotate objects
     Cube.rx += 100* dt
     Cube.ry += 100* dt
     Cube.rz += 100* dt
 
-    Pyramid.rx += 100* dt
-    Pyramid.ry += 100* dt
-    Pyramid.rz += 100* dt
+    #Pyramid.rx += 100* dt
+    #Pyramid.ry += 100* dt
+    #Pyramid.rz += 100* dt
 
-    Prism.rx += 100* dt
-    Prism.ry += 100* dt
-    Prism.rz += 100* dt
+    #Prism.rx += 100* dt
+    #Prism.ry += 100* dt
+    #Prism.rz += 100* dt
 
-    #Cube.draw3D(screen)
+    # Draw objects
+    Cube.draw3D(screen)
     #Pyramid.draw3D(screen)
-    Prism.draw3D(screen)
+    #Prism.draw3D(screen)
 
     pygame.display.update()
     et = time.time()
