@@ -2,20 +2,21 @@ import sys
 import math
 import time
 import pygame
+import json
 
 class Vertex():
-    def __init__(self, posX, posY, posZ):
+    def __init__(self, pos):
         # Store position of one Vertex
-        self.x = posX
-        self.y = posY
-        self.z = posZ
+        self.x = pos[0]
+        self.y = pos[1]
+        self.z = pos[2]
 
 class Object():
     # 3D Object with a pivot, vertices and edges
-    def __init__(self, cntre, verts, edgs, col=(255,255,255)):
-        self.x = cntre[0]
-        self.y = cntre[1]
-        self.z = cntre[2]
+    def __init__(self, cntr, verts, edgs, col=(255,255,255)):
+        self.x = cntr[0]
+        self.y = cntr[1]
+        self.z = cntr[2]
 
         self.vertices = verts  # Store positions of vertexes in a list
         self.edges = edgs       # Uses index to represent edges
@@ -71,42 +72,10 @@ screen = pygame.display.set_mode((600, 600), 0, 32)
 
 st, et = 0, 0
 
-# Cube Object
-centre = (0,0,0)
-vertices =[Vertex(50, 50, 50),  Vertex(-50, 50, 50),
-            Vertex(50,-50, 50),  Vertex(-50,-50, 50),
-            Vertex(50, 50,-50),  Vertex(-50, 50,-50),
-            Vertex(50,-50,-50),  Vertex(-50,-50,-50)]
-edges = ([0,1], [0,2], [0,4],
-         [3,1], [3,2], [3,7],
-         [5,4], [5,7], [5,1],
-         [6,7], [6,4], [6,2])
-Cube = Object(centre, vertices, edges)
-
-# Triangle object
-centre = (0,0,0)
-vertices =[Vertex(50, -50, 50),  Vertex(-50, -50, 50),
-            Vertex(50,-50, -50),  Vertex(-50,-50, -50),
-            Vertex(0, 50,0)]
-edges = ([0,1], [0,2],
-         [3,1], [3,2],
-         [0,4], [1,4],
-         [2,4], [3,4])
-
-Pyramid = Object(centre, vertices, edges)
-
-# Prism object
-centre = (0,0,0)
-vertices =[Vertex(100, -50, 50),  Vertex(-50, -50, 50),
-            Vertex(100,-50, -50),  Vertex(-50,-50, -50),
-            Vertex(100, 50,0), Vertex(-50, 50,0)]
-edges = ([0,1], [0,2],
-         [3,1], [3,2],
-         [0,4], [1,5],
-         [2,4], [3,5],
-         [4,5])
-
-Prism = Object(centre, vertices, edges)
+# Open model from file
+with open("Models/Prism.txt", "r") as objF:
+    vertices, edges = json.load(objF)
+    obj = Object((0,0,0), [Vertex(vert) for vert in vertices], edges)
 
 # Game loop
 while True:
@@ -121,22 +90,12 @@ while True:
             sys.exit()
     
     # Rotate objects
-    Cube.rx += 100* dt
-    Cube.ry += 100* dt
-    Cube.rz += 100* dt
-
-    #Pyramid.rx += 100* dt
-    #Pyramid.ry += 100* dt
-    #Pyramid.rz += 100* dt
-
-    #Prism.rx += 100* dt
-    #Prism.ry += 100* dt
-    #Prism.rz += 100* dt
+    obj.rx += 100*dt
+    obj.ry += 100*dt
+    obj.rz += 100*dt
 
     # Draw objects
-    Cube.draw3D(screen)
-    #Pyramid.draw3D(screen)
-    #Prism.draw3D(screen)
+    obj.draw3D(screen)
 
     pygame.display.update()
     et = time.time()
