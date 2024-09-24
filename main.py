@@ -33,7 +33,6 @@ class Object():
     def draw3D(self, screen):
         points = []
         for vert in self.vertices:
-            # Matrix approach
             # Calculation of rotation about x
             Rx = ( vert.x+self.x, 
                   (vert.y+self.y)*math.cos(self.rx*math.pi/180) + (vert.z+self.z)*math.sin(self.rx*math.pi/180), 
@@ -55,6 +54,9 @@ class Object():
             pygame.draw.circle(screen, self.colour, (dispX, dispY), 2)
             points.append((dispX, dispY))
         
+        R = int(127.5 * (1 + math.sin(t + 0)))
+        G = int(127.5 * (1 + math.sin(t + 2 * math.pi / 3)))
+        B = int(127.5 * (1 + math.sin(t + 4 * math.pi / 3)))
         # Draw edge lines
         for line in self.edges:
             startI = line[0]
@@ -64,22 +66,24 @@ class Object():
             endP = points[endI]
 
             # draw lines
-            pygame.draw.line(screen, self.colour, startP, endP, 2)
+            pygame.draw.line(screen, (R,G,B), startP, endP, 2)
 
 # Initialise pygame
 pygame.init()
 screen = pygame.display.set_mode((600, 600), 0, 32)
 
 st, et = 0, 0
+t = 0
 
 # Open model from file
-with open("Models/Prism.txt", "r") as objF:
+with open("Models/Dodecahedron.txt", "r") as objF:
     vertices, edges = json.load(objF)
     obj = Object((0,0,0), [Vertex(vert) for vert in vertices], edges)
 
 # Game loop
 while True:
     dt = et - st
+    t += dt
     st = time.time()
     screen.fill((0, 0, 0))
 
@@ -88,10 +92,10 @@ while True:
         if event.type == pygame.QUIT:
             pygame.quit()
             sys.exit()
-    
+
     # Rotate objects
     obj.rx += 100*dt
-    obj.ry += 100*dt
+    #obj.ry += 100*dt
     obj.rz += 100*dt
 
     # Draw objects
