@@ -68,17 +68,49 @@ class Object():
             # draw lines
             pygame.draw.line(screen, (R,G,B), startP, endP, 2)
 
+def Input(dt, k):
+    global curr, obj
+    if k == None:
+        return
+        
+    # Rotate objects
+    obj.rx += 100*dt if k[pygame.K_s] else 0
+    obj.rx -= 100*dt if k[pygame.K_w] else 0
+    obj.ry += 100*dt if k[pygame.K_d] else 0
+    obj.ry -= 100*dt if k[pygame.K_a] else 0
+    obj.rz += 100*dt if k[pygame.K_q] else 0
+    obj.rz -= 100*dt if k[pygame.K_e] else 0
+
+    # Change Object
+    curr += 10*dt if k[pygame.K_RIGHT] else 0
+    curr -= 10*dt if k[pygame.K_LEFT] else 0
+
+    vertices, edges = GetObject()
+    obj.vertices = vertices
+    obj.edges = edges
+
+def GetObject():
+    global curr
+    allObj= ["Cube", "Pyramid", "Prism", "Dodecahedron", "Torus"]
+    n = int(curr%len(allObj))
+
+    # Open model from file
+    with open(f"Models/{allObj[n]}.txt", "r") as objF:
+        vertices, edges = json.load(objF)
+    return [Vertex(vert) for vert in vertices], edges
+
 # Initialise pygame
 pygame.init()
 screen = pygame.display.set_mode((600, 600), 0, 32)
 
 st, et = 0, 0
 t = 0
+k = None
 
-# Open model from file
-with open("Models/Dodecahedron.txt", "r") as objF:
-    vertices, edges = json.load(objF)
-    obj = Object((0,0,0), [Vertex(vert) for vert in vertices], edges)
+# Initialise the Object
+curr = 0
+vertices, edges = GetObject()
+obj = Object((0,0,0), vertices, edges)
 
 # Game loop
 while True:
@@ -93,10 +125,17 @@ while True:
             pygame.quit()
             sys.exit()
 
-    # Rotate objects
-    obj.rx += 100*dt
-    #obj.ry += 100*dt
-    obj.rz += 100*dt
+        # Store inputs in the list k
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_ESCAPE:
+                pygame.quit()
+                sys.exit()
+            k = pygame.key.get_pressed()
+        if event.type == pygame.KEYUP:
+            k = pygame.key.get_pressed()
+
+    # Handle user input
+    Input(dt,k)
 
     # Draw objects
     obj.draw3D(screen)
