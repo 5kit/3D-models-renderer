@@ -11,15 +11,15 @@ class Vertex():
         self.y = pos[1]
         self.z = pos[2]
 
-class Object():
+class newObject():
     # 3D Object with a pivot, vertices and edges
-    def __init__(self, cntr, verts, edgs, col=(255,255,255)):
-        self.x = cntr[0]
-        self.y = cntr[1]
-        self.z = cntr[2]
+    def __init__(self):
+        self.x = 0
+        self.y = 0
+        self.z = 0
 
-        self.vertices = verts  # Store positions of vertexes in a list
-        self.edges = edgs       # Uses index to represent edges
+        self.vertices = []  # Store positions of vertexes in a list
+        self.edges = []     # Uses index to represent edges
 
         # rotation of object by all 3 axis
         # in degrees
@@ -27,12 +27,12 @@ class Object():
         self.ry = 0
         self.rz = 0
 
-        self.colour = col
+        self.colour = (255,255,255)
     
     # draw a the object using 
     def draw3D(self, screen):
         points = []
-        for vert in self.vertices:
+        for n, vert in enumerate(self.vertices):
             # Calculation of rotation about x
             Rx = ( vert.x+self.x, 
                   (vert.y+self.y)*math.cos(self.rx*math.pi/180) + (vert.z+self.z)*math.sin(self.rx*math.pi/180), 
@@ -51,12 +51,12 @@ class Object():
             dispX = 300+ Rz[0]
             dispY = 300+ Rz[1]
             
-            pygame.draw.circle(screen, self.colour, (dispX, dispY), 2)
+            colour = (0,255,0) if n in Points else self.colour
+            colour = (255,0,0) if n == dex else colour
+
+            pygame.draw.circle(screen, colour, (dispX, dispY), 3)
             points.append((dispX, dispY))
         
-        R = int(127.5 * (1 + math.sin(t + 0)))
-        G = int(127.5 * (1 + math.sin(t + 2 * math.pi / 3)))
-        B = int(127.5 * (1 + math.sin(t + 4 * math.pi / 3)))
         # Draw edge lines
         for line in self.edges:
             startI = line[0]
@@ -66,38 +66,70 @@ class Object():
             endP = points[endI]
 
             # draw lines
-            pygame.draw.line(screen, (R,G,B), startP, endP, 2)
+            pygame.draw.line(screen, self.colour, startP, endP, 2)
+    
+    def save(self):
+        pass
 
-def Input(dt, k):
-    global curr, obj
+    def load(self):
+        pass
+
+def Update(dt, k):
+    global curr, obj, dex, cl
     if k == None:
         return
         
     # Rotate objects
-    obj.rx += 100*dt if k[pygame.K_s] else 0
-    obj.rx -= 100*dt if k[pygame.K_w] else 0
-    obj.ry += 100*dt if k[pygame.K_d] else 0
-    obj.ry -= 100*dt if k[pygame.K_a] else 0
-    obj.rz += 100*dt if k[pygame.K_q] else 0
-    obj.rz -= 100*dt if k[pygame.K_e] else 0
+    obj.rx += 100*dt if k[pygame.K_k] else 0
+    obj.rx -= 100*dt if k[pygame.K_i] else 0
+    obj.ry += 100*dt if k[pygame.K_l] else 0
+    obj.ry -= 100*dt if k[pygame.K_j] else 0
+    obj.rz += 100*dt if k[pygame.K_u] else 0
+    obj.rz -= 100*dt if k[pygame.K_o] else 0
+    
+    # Movement of vertex
+    if dex != -1:
+        obj.vertices[dex].y += 100*dt if k[pygame.K_s] and dex != -1 else 0
+        obj.vertices[dex].y -= 100*dt if k[pygame.K_w] and dex != -1 else 0
+        obj.vertices[dex].x += 100*dt if k[pygame.K_d] and dex != -1 else 0
+        obj.vertices[dex].x -= 100*dt if k[pygame.K_a] and dex != -1 else 0
+        obj.vertices[dex].z += 100*dt if k[pygame.K_q] and dex != -1 else 0
+        obj.vertices[dex].z -= 100*dt if k[pygame.K_e] and dex != -1 else 0
 
-    # Change Object
-    curr += 10*dt if k[pygame.K_RIGHT] else 0
-    curr -= 10*dt if k[pygame.K_LEFT] else 0
+    if not cl:
+        return
 
-    vertices, edges = GetObject()
-    obj.vertices = vertices
-    obj.edges = edges
+    # Create an edge
+    if k[pygame.K_RETURN] and Points[1] != None:
+        if Points in obj.edges:
+            obj.edges.remove(Points)
+        elif Points[::-1] in obj.edges:
+            obj.edges.remove(Points[::-1])
+        else:
+            obj.edges.append([Points[0],Points[1]])
+        cl = False
 
-def GetObject():
-    global curr
-    allObj= ["Cube", "Pyramid", "Prism", "Dodecahedron", "Torus"]
-    n = int(curr%len(allObj))
+    # Create a Vertex
+    if k[pygame.K_UP]:
+        n = len(obj.vertices)
+        obj.vertices.append(Vertex((0,0,0)))
+        dex = n
+        cl = False
 
-    # Open model from file
-    with open(f"Models/{allObj[n]}.txt", "r") as objF:
-        vertices, edges = json.load(objF)
-    return [Vertex(vert) for vert in vertices], edges
+    # Change Points for edge
+    if k[pygame.K_DOWN] and dex != Points[0]:
+        Points[1] = Points[0]
+        Points[0] = dex
+        cl = False
+
+    # Change Points for Motion
+    if k[pygame.K_LEFT] and len(obj.vertices) > 1:
+        dex = (dex - 1) % len(obj.vertices)
+        cl = False
+    if k[pygame.K_RIGHT] and len(obj.vertices) > 1:
+        dex = (dex + 1) % len(obj.vertices)
+        cl = False
+
 
 # Initialise pygame
 pygame.init()
@@ -106,11 +138,12 @@ screen = pygame.display.set_mode((600, 600), 0, 32)
 st, et = 0, 0
 t = 0
 k = None
+cl = True
 
 # Initialise the Object
-curr = 0
-vertices, edges = GetObject()
-obj = Object((0,0,0), vertices, edges)
+dex = -1
+Points = [None, None]
+obj = newObject()
 
 # Game loop
 while True:
@@ -132,10 +165,11 @@ while True:
                 sys.exit()
             k = pygame.key.get_pressed()
         if event.type == pygame.KEYUP:
+            cl = True
             k = pygame.key.get_pressed()
 
     # Handle user input
-    Input(dt,k)
+    Update(dt,k)
 
     # Draw objects
     obj.draw3D(screen)
