@@ -3,6 +3,7 @@ import math
 import time
 import pygame
 import json
+import os
 
 class Vertex():
     def __init__(self, pos):
@@ -119,18 +120,18 @@ def Update(dt, k):
     curr -= 10*dt if k[pygame.K_LEFT] else 0
 
     # Get the Object properties and swap it out
-    vertices, edges = GetObject(curr)
+    vertices, faces = GetObject(curr)
     obj.vertices = vertices
-    obj.edges = edges
+    obj.faces = faces
 
 def GetObject(curr):
-    allObj= ["object_2024-09-26-20-31"]
+    allObj= [file for file in os.listdir("Models/") if os.path.isfile(os.path.join("Models/", file))]
     n = int(curr%len(allObj))
 
     # Open model from file
-    with open(f"Models/{allObj[n]}.obj", "r") as objF:
-        vertices, edges = json.load(objF)
-    return [Vertex(vert) for vert in vertices], edges
+    with open(f"Models/{allObj[n]}", "r") as objF:
+        vertices, faces = json.load(objF)
+    return [Vertex(vert) for vert in vertices], faces
 
 def displayText(screen, text, pos=(50,50), font=None, color=(255, 255, 255)):
     font = pygame.font.SysFont('None', 32) if font == None else font
