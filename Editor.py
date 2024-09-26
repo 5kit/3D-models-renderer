@@ -73,7 +73,7 @@ class newObject():
         if N[2] < 0:
             return
         
-        shade = math.sqrt(N[2])/500
+        shade = min(math.sqrt(N[2])/100,1)
         col = (int(hex[0:2], 16)*shade, int(hex[2:4], 16)*shade, int(hex[4:], 16)*shade)
 
         #pygame.draw.line(screen, (255,255,255), C1[:2], C2[:2], 2)
@@ -82,10 +82,15 @@ class newObject():
         pygame.draw.polygon(screen, col, (C1[:2], C2[:2], C3[:2]))
 
     def save(self):
-        pass
+        current_time = time.localtime()
+        formatted_time = time.strftime("%Y-%m-%d-%H-%M", current_time)
+        filename = "Models/object_" + formatted_time + ".obj"
 
-    def load(self):
-        pass
+        data = [[[v.x, v.y, v.z] for v in self.vertices], self.faces]
+
+        with open(filename, 'w') as objF:
+            json.dump(data,objF)
+        
 
 def CalculateSurfaceNormal(C1,C2,C3):
     # Calculate Surface normals
@@ -171,6 +176,15 @@ def Update(dt, k):
         dex = (dex + 1) % len(obj.vertices)
         cl = False
 
+    # Save object to Models
+    if k[pygame.K_SPACE]:
+        obj.save()
+        cl = False
+
+def displayText(screen, text, pos=(50,50), font=None, color=(255, 255, 255)):
+    font = pygame.font.SysFont('None', 32) if font == None else font
+    info_surface = font.render(text, False, color)
+    screen.blit(info_surface, pos)
 
 # Initialise pygame
 pygame.init()
@@ -178,6 +192,8 @@ screen = pygame.display.set_mode((600, 600), 0, 32)
 
 st, et = 0, 0
 t = 0
+n = 0
+fps = 0
 k = None
 cl = True
 
@@ -190,6 +206,7 @@ obj = newObject()
 while True:
     dt = et - st
     t += dt
+    n += 1
     st = time.time()
     screen.fill((0, 0, 0))
 
@@ -214,6 +231,11 @@ while True:
 
     # Draw objects
     obj.draw3D(screen)
+
+    # Debug info
+    if n % 1000 == 0:
+        fps = round(n/t)
+    displayText(screen, f"fps: {fps}, rx: {round(obj.rx,1)}, ry: {round(obj.ry,1)}, rz: {round(obj.rz,1)}")
 
     pygame.display.update()
     et = time.time()

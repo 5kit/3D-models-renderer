@@ -72,7 +72,7 @@ class Object():
         if N[2] < 0:
             return
         
-        shade = math.sqrt(N[2])/100
+        shade = min(math.sqrt(N[2])/100,1)
         col = (int(hex[0:2], 16)*shade, int(hex[2:4], 16)*shade, int(hex[4:], 16)*shade)
 
         #pygame.draw.line(screen, (255,255,255), C1[:2], C2[:2], 2)
@@ -124,11 +124,11 @@ def Update(dt, k):
     obj.edges = edges
 
 def GetObject(curr):
-    allObj= ["Rubix"]
-    n = 0#int(curr%len(allObj))
+    allObj= ["object_2024-09-26-20-31"]
+    n = int(curr%len(allObj))
 
     # Open model from file
-    with open(f"Models/{allObj[n]}.txt", "r") as objF:
+    with open(f"Models/{allObj[n]}.obj", "r") as objF:
         vertices, edges = json.load(objF)
     return [Vertex(vert) for vert in vertices], edges
 
