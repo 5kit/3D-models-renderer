@@ -13,21 +13,19 @@ class Vertex():
 
 class Object():
     # 3D Object with a pivot, vertices and edges
-    def __init__(self, cntr, verts, edgs, col=(255,255,255)):
+    def __init__(self, cntr, verts, faces):
         self.x = cntr[0]
         self.y = cntr[1]
         self.z = cntr[2]
 
         self.vertices = verts  # Store positions of vertexes in a list
-        self.edges = edgs       # Uses index to represent edges
+        self.faces = faces # Faces with 3 vertices with a colour in hex
 
         # rotation of object by all 3 axis
         # in degrees
         self.rx = 0
         self.ry = 0
         self.rz = 0
-
-        self.colour = col
     
     # draw a the object using 
     def draw3D(self, screen):
@@ -50,23 +48,54 @@ class Object():
 
             dispX = 300+ Rz[0]
             dispY = 300+ Rz[1]
+            dispZ = Rz[2]
             
-            pygame.draw.circle(screen, self.colour, (dispX, dispY), 2)
-            points.append((dispX, dispY))
+            #pygame.draw.circle(screen, (255,255,255), (dispX, dispY), 2)
+            points.append((dispX, dispY, dispZ))
         
         R = int(127.5 * (1 + math.sin(t + 0)))
         G = int(127.5 * (1 + math.sin(t + 2 * math.pi / 3)))
         B = int(127.5 * (1 + math.sin(t + 4 * math.pi / 3)))
-        # Draw edge lines
-        for line in self.edges:
-            startI = line[0]
-            endI = line[1]
-            # use indexes to get positions
-            startP = points[startI]
-            endP = points[endI]
 
-            # draw lines
-            pygame.draw.line(screen, (R,G,B), startP, endP, 2)
+        for face in self.faces:
+            self.DrawFace(screen, face, points)
+        
+
+    def DrawFace(self, screen, face, points):
+        col = face[0]
+        C1 = points[face[1]]
+        C2 = points[face[2]]
+        C3 = points[face[3]]
+
+        N = CalculateSurfaceNormal(C1,C2,C3)
+
+        if N[2] < 0:
+            return
+        
+        pygame.draw.line(screen, (255,255,255), C1[:2], C2[:2], 2)
+        pygame.draw.line(screen, (255,255,255), C2[:2], C3[:2], 2)
+        pygame.draw.line(screen, (255,255,255), C1[:2], C3[:2], 2)
+        
+        
+def CalculateSurfaceNormal(C1,C2,C3):
+    # Calculate Surface normals
+    A = [
+        C2[0] - C1[0],
+        C2[1] - C1[1],
+        C2[2] - C1[2]
+        ]
+    B = [
+        C3[0] - C1[0],
+        C3[1] - C1[1],
+        C3[2] - C1[2]
+    ]
+    N = [
+        A[1]*B[2] - A[2]*B[1],
+        A[2]*B[0] - A[0]*B[2],
+        A[0]*B[1] - A[1]*B[0]
+    ]
+    return N
+
 
 def Input(dt, k):
     global curr, obj
@@ -91,13 +120,18 @@ def Input(dt, k):
     obj.edges = edges
 
 def GetObject(curr):
-    allObj= ["Cube", "Pyramid", "Prism", "Dodecahedron", "Torus"]
-    n = int(curr%len(allObj))
+    allObj= ["CubeN", "Pyramid", "Prism", "Dodecahedron", "Torus"]
+    n = 0#int(curr%len(allObj))
 
     # Open model from file
     with open(f"Models/{allObj[n]}.txt", "r") as objF:
         vertices, edges = json.load(objF)
     return [Vertex(vert) for vert in vertices], edges
+
+def displayText(screen, text, pos=(50,50), font=None, color=(255, 255, 255)):
+    font = pygame.font.SysFont(None, 32) if font == None else font
+    info_surface = font.render(text, True, color)
+    screen.blit(info_surface, pos)
 
 # Initialise pygame
 pygame.init()
@@ -115,6 +149,8 @@ obj = Object((0,0,0), vertices, edges)
 # Game loop
 while True:
     dt = et - st
+    if dt != 0:
+        displayText(screen, f"fps: {1/dt}, rx: {obj.rx}, ry: {obj.ry}, rz: {obj.rz}")
     t += dt
     st = time.time()
     screen.fill((0, 0, 0))
