@@ -19,7 +19,7 @@ class newObject():
         self.z = 0
 
         self.vertices = []  # Store positions of vertexes in a list
-        self.edges = []     # Uses index to represent edges
+        self.faces = [] # Faces with 3 vertices with a colour in hex
 
         # rotation of object by all 3 axis
         # in degrees
@@ -50,32 +50,64 @@ class newObject():
 
             dispX = 300+ Rz[0]
             dispY = 300+ Rz[1]
+            dispZ = Rz[2]
             
             colour = (0,255,0) if n in Points else self.colour
             colour = (255,0,0) if n == dex else colour
 
             pygame.draw.circle(screen, colour, (dispX, dispY), 3)
-            points.append((dispX, dispY))
+            points.append((dispX, dispY, dispZ))
         
-        # Draw edge lines
-        for line in self.edges:
-            startI = line[0]
-            endI = line[1]
-            # use indexes to get positions
-            startP = points[startI]
-            endP = points[endI]
+        for face in self.faces:
+            self.DrawFace(screen, face, points)
+        
 
-            # draw lines
-            pygame.draw.line(screen, self.colour, startP, endP, 2)
-    
+    def DrawFace(self, screen, face, points):
+        hex = face[0]
+        C1 = points[face[1]]
+        C2 = points[face[2]]
+        C3 = points[face[3]]
+
+        N = CalculateSurfaceNormal(C1,C2,C3)
+
+        if N[2] < 0:
+            return
+        
+        shade = math.sqrt(N[2])/500
+        col = (int(hex[0:2], 16)*shade, int(hex[2:4], 16)*shade, int(hex[4:], 16)*shade)
+
+        #pygame.draw.line(screen, (255,255,255), C1[:2], C2[:2], 2)
+        #pygame.draw.line(screen, (255,255,255), C2[:2], C3[:2], 2)
+        #pygame.draw.line(screen, (255,255,255), C1[:2], C3[:2], 2)
+        pygame.draw.polygon(screen, col, (C1[:2], C2[:2], C3[:2]))
+
     def save(self):
         pass
 
     def load(self):
         pass
 
+def CalculateSurfaceNormal(C1,C2,C3):
+    # Calculate Surface normals
+    A = [
+        C2[0] - C1[0],
+        C2[1] - C1[1],
+        C2[2] - C1[2]
+        ]
+    B = [
+        C3[0] - C1[0],
+        C3[1] - C1[1],
+        C3[2] - C1[2]
+    ]
+    N = [
+        A[1]*B[2] - A[2]*B[1],
+        A[2]*B[0] - A[0]*B[2],
+        A[0]*B[1] - A[1]*B[0]
+    ]
+    return N
+
 def Update(dt, k):
-    global curr, obj, dex, cl
+    global curr, obj, dex, Points, cl
     if k == None:
         return
         
@@ -99,14 +131,22 @@ def Update(dt, k):
     if not cl:
         return
 
-    # Create an edge
-    if k[pygame.K_RETURN] and Points[1] != None:
-        if Points in obj.edges:
-            obj.edges.remove(Points)
-        elif Points[::-1] in obj.edges:
-            obj.edges.remove(Points[::-1])
+    # Create an face
+    if k[pygame.K_RETURN] and Points[3] != None:
+        if Points in obj.faces:
+            obj.faces.remove(Points)
         else:
-            obj.edges.append([Points[0],Points[1]])
+            obj.faces.append([Points[0],Points[1],Points[2],Points[3]])
+        cl = False
+
+    # Delete a point
+    if k[pygame.K_BACKSPACE] and dex != -1:
+        for face in obj.faces:
+            if dex in face:
+                obj.faces.remove(face) 
+        obj.vertices.pop(dex)
+        dex = -1
+        Points = ["ffffff", None, None, None]
         cl = False
 
     # Create a Vertex
@@ -117,9 +157,10 @@ def Update(dt, k):
         cl = False
 
     # Change Points for edge
-    if k[pygame.K_DOWN] and dex != Points[0]:
-        Points[1] = Points[0]
-        Points[0] = dex
+    if k[pygame.K_DOWN] and dex not in Points and dex != -1:
+        Points[3] = Points[2]
+        Points[2] = Points[1]
+        Points[1] = dex
         cl = False
 
     # Change Points for Motion
@@ -142,7 +183,7 @@ cl = True
 
 # Initialise the Object
 dex = -1
-Points = [None, None]
+Points = ["ffffff", None, None, None]
 obj = newObject()
 
 # Game loop

@@ -62,7 +62,7 @@ class Object():
         
 
     def DrawFace(self, screen, face, points):
-        col = face[0]
+        hex = face[0]
         C1 = points[face[1]]
         C2 = points[face[2]]
         C3 = points[face[3]]
@@ -72,9 +72,13 @@ class Object():
         if N[2] < 0:
             return
         
-        pygame.draw.line(screen, (255,255,255), C1[:2], C2[:2], 2)
-        pygame.draw.line(screen, (255,255,255), C2[:2], C3[:2], 2)
-        pygame.draw.line(screen, (255,255,255), C1[:2], C3[:2], 2)
+        shade = math.sqrt(N[2])/100
+        col = (int(hex[0:2], 16)*shade, int(hex[2:4], 16)*shade, int(hex[4:], 16)*shade)
+
+        #pygame.draw.line(screen, (255,255,255), C1[:2], C2[:2], 2)
+        #pygame.draw.line(screen, (255,255,255), C2[:2], C3[:2], 2)
+        #pygame.draw.line(screen, (255,255,255), C1[:2], C3[:2], 2)
+        pygame.draw.polygon(screen, col, (C1[:2], C2[:2], C3[:2]))
         
         
 def CalculateSurfaceNormal(C1,C2,C3):
@@ -97,7 +101,7 @@ def CalculateSurfaceNormal(C1,C2,C3):
     return N
 
 
-def Input(dt, k):
+def Update(dt, k):
     global curr, obj
     if k == None:
         return
@@ -120,7 +124,7 @@ def Input(dt, k):
     obj.edges = edges
 
 def GetObject(curr):
-    allObj= ["CubeN", "Pyramid", "Prism", "Dodecahedron", "Torus"]
+    allObj= ["Rubix"]
     n = 0#int(curr%len(allObj))
 
     # Open model from file
@@ -129,16 +133,19 @@ def GetObject(curr):
     return [Vertex(vert) for vert in vertices], edges
 
 def displayText(screen, text, pos=(50,50), font=None, color=(255, 255, 255)):
-    font = pygame.font.SysFont(None, 32) if font == None else font
-    info_surface = font.render(text, True, color)
+    font = pygame.font.SysFont('None', 32) if font == None else font
+    info_surface = font.render(text, False, color)
     screen.blit(info_surface, pos)
 
 # Initialise pygame
 pygame.init()
 screen = pygame.display.set_mode((600, 600), 0, 32)
+pygame.font.init()
 
 st, et = 0, 0
 t = 0
+n = 0
+fps = 0
 k = None
 
 # Initialise the Object
@@ -149,9 +156,8 @@ obj = Object((0,0,0), vertices, edges)
 # Game loop
 while True:
     dt = et - st
-    if dt != 0:
-        displayText(screen, f"fps: {1/dt}, rx: {obj.rx}, ry: {obj.ry}, rz: {obj.rz}")
     t += dt
+    n += 1
     st = time.time()
     screen.fill((0, 0, 0))
 
@@ -171,10 +177,15 @@ while True:
             k = pygame.key.get_pressed()
 
     # Handle user input
-    Input(dt,k)
+    Update(dt,k)
 
     # Draw objects
     obj.draw3D(screen)
+
+    # Debug info
+    if n % 1000 == 0:
+        fps = round(n/t)
+    displayText(screen, f"fps: {fps}, rx: {round(obj.rx,1)}, ry: {round(obj.ry,1)}, rz: {round(obj.rz,1)}")
 
     pygame.display.update()
     et = time.time()
