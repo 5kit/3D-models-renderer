@@ -58,6 +58,8 @@ class Object():
         G = int(127.5 * (1 + math.sin(t + 2 * math.pi / 3)))
         B = int(127.5 * (1 + math.sin(t + 4 * math.pi / 3)))
 
+        self.faces.sort(key=lambda f:min(min(points[f[1]][2],points[f[2]][2]),points[f[3]][2]))
+
         for face in self.faces:
             self.DrawFace(screen, face, points)
         
@@ -126,7 +128,7 @@ def Update(dt, k):
 
 def GetObject(curr):
     global allObj
-    n = 0#int(curr%len(allObj))
+    #n = 0#int(curr%len(allObj))
 
     # Open model from file
     # with open(f"Models/{allObj[n]}", "r") as objF:
@@ -141,7 +143,7 @@ def displayText(screen, text, pos=(50,50), font=None, color=(255, 255, 255)):
 
 # Initialise pygame
 pygame.init()
-S_W, S_H = (800,600)
+S_W, S_H = (1000,600)
 FOV = 60
 screen = pygame.display.set_mode((S_W, S_H), 0, 32)
 pygame.font.init()
