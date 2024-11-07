@@ -47,8 +47,8 @@ class Object():
                   (Ry[0])*-math.sin(self.rz*math.pi/180) + (Ry[1])*math.cos(self.rz*math.pi/180), 
                    Ry[2])
 
-            dispX = 300+ Rz[0]
-            dispY = 300+ Rz[1]
+            dispX = S_W/2+ Rz[0]*1/(math.tan(FOV/2*math.pi/180))
+            dispY = S_H/2+ Rz[1]*1/(math.tan(FOV/2*math.pi/180))
             dispZ = Rz[2]
             
             #pygame.draw.circle(screen, (255,255,255), (dispX, dispY), 2)
@@ -125,11 +125,12 @@ def Update(dt, k):
     obj.faces = faces
 
 def GetObject(curr):
-    allObj= [file for file in os.listdir("Models/") if os.path.isfile(os.path.join("Models/", file))]
-    n = int(curr%len(allObj))
+    global allObj
+    n = 0#int(curr%len(allObj))
 
     # Open model from file
-    with open(f"Models/{allObj[n]}", "r") as objF:
+    # with open(f"Models/{allObj[n]}", "r") as objF:
+    with open(f"Models/chiken.obj", "r") as objF:
         vertices, faces = json.load(objF)
     return [Vertex(vert) for vert in vertices], faces
 
@@ -140,7 +141,9 @@ def displayText(screen, text, pos=(50,50), font=None, color=(255, 255, 255)):
 
 # Initialise pygame
 pygame.init()
-screen = pygame.display.set_mode((600, 600), 0, 32)
+S_W, S_H = (800,600)
+FOV = 60
+screen = pygame.display.set_mode((S_W, S_H), 0, 32)
 pygame.font.init()
 
 st, et = 0, 0
@@ -148,6 +151,9 @@ t = 0
 n = 0
 fps = 0
 k = None
+
+allObj= [file for file in os.listdir("Models/") if os.path.isfile(os.path.join("Models/", file))]
+print(allObj)
 
 # Initialise the Object
 curr = 0
